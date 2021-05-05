@@ -9,9 +9,9 @@
 #include <unistd.h>
 
 static const char SYMBOLS_SCHEMA[] = "create table if not exists symbols (name "
-  "text not null, path text not null, category integer not null, line integer "
+  "text not null, path text not null, category integer not null, cx_category integer not null, line integer "
   "not null, col integer not null, parent text, "
-  "unique(name, path, category, line, col));";
+  "unique(name, path, category, cx_category, line, col));";
 
 static const char CONTENT_SCHEMA[] = "create table if not exists content "
   "(path text not null, line integer not null, body text not null, "

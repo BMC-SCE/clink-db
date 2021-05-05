@@ -10,6 +10,7 @@
 #include <string.h>
 #include <unistd.h>
 
+
 // a Clang node we are intending to traverse
 typedef struct {
   char *parent; ///< named parent, grandparent, etc. of this node
@@ -181,7 +182,7 @@ static node_t pop_cursor(state_t *s) {
   return n;
 }
 
-static int push_symbol(state_t *s, clink_category_t category, const char *name,
+static int push_symbol(state_t *s, clink_category_t category, cx_cursor_kind cx_category, const char *name,
     const char *path, unsigned long lineno, unsigned long colno) {
 
   assert(s != NULL);
@@ -202,6 +203,7 @@ static int push_symbol(state_t *s, clink_category_t category, const char *name,
   clink_symbol_t sym = { 0 };
 
   sym.category = category;
+  sym.cx_category = cx_category;
 
   assert(name != NULL);
   sym.name = strdup(name);
@@ -276,6 +278,7 @@ static enum CXChildVisitResult visit(CXCursor cursor, CXCursor parent,
   // retrieve the type of this symbol
   enum CXCursorKind kind = clang_getCursorKind(cursor);
   clink_category_t category = CLINK_INCLUDE;
+  cx_cursor_kind cx_category = kind;
   switch (kind) {
     case CXCursor_StructDecl:
     case CXCursor_UnionDecl:
@@ -327,7 +330,8 @@ static enum CXChildVisitResult visit(CXCursor cursor, CXCursor parent,
       break;
 
     default: // something irrelevant
-      return CXChildVisit_Continue;
+      //return CXChildVisit_Continue;
+      category = CLINK_OTHER;
   }
 
   // retrieve the name of this thing
@@ -353,7 +357,7 @@ static enum CXChildVisitResult visit(CXCursor cursor, CXCursor parent,
     const char *fname = clang_getCString(filename);
 
     // enqueue this symbol for future yielding
-    s->rc = push_symbol(s, category, name, fname, lineno, colno);
+    s->rc = push_symbol(s, category, cx_category, name, fname, lineno, colno);
 
     clang_disposeString(filename);
   }

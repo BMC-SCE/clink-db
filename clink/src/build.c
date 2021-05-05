@@ -5,6 +5,7 @@
 #include "option.h"
 #include "path.h"
 #include <pthread.h>
+#include <regex.h>
 #include "sigint.h"
 #include <signal.h>
 #include <stdarg.h>
@@ -136,6 +137,42 @@ static void error(unsigned long thread_id, const char *fmt, ...) {
     } \
   } while (0)
 
+///  compile a regular expression from compiler default search path
+static int compile_path (regex_t *rp) {
+  int rc = 0;
+  char **includes = NULL;
+  size_t includes_len = 0;
+  const char *compiler = NULL;
+  
+  rc = clink_compiler_includes(compiler, &includes, &includes_len);
+
+  if (rc) {
+    fprintf(stderr, "clink_compiler_includes: %s\n", strerror(rc));
+    return EXIT_FAILURE;
+  }
+
+  size_t length = 0;
+  for (size_t i = 0; i < includes_len; ++i)
+    length += strlen(includes[i]);
+
+  char *regex_p=(char*)calloc(length + includes_len, 1);
+  
+  for (size_t i = 0; i < includes_len; ++i){
+      if ( i == 0 ) 
+	  strncat (regex_p, includes[i], strlen(includes[i]));
+      else {
+          strcat  (regex_p, "|");
+          strncat (regex_p, includes[i], strlen(includes[i]));
+      }
+   }
+
+      rc = regcomp(rp, regex_p, REG_EXTENDED|REG_NOSUB);
+
+     free(regex_p);
+     return rc;
+}
+
+
 /// drain a work queue, processing its entries into the database
 static int process(unsigned long thread_id, pthread_t *threads, clink_db_t *db,
     work_queue_t *wq) {
@@ -144,6 +181,11 @@ static int process(unsigned long thread_id, pthread_t *threads, clink_db_t *db,
   assert(wq != NULL);
 
   int rc = 0;
+
+  regex_t rp = {0};
+
+  if (option.exclude_sdsp)
+  compile_path (&rp);
 
   for (;;) {
 
@@ -230,8 +272,14 @@ static int process(unsigned long thread_id, pthread_t *threads, clink_db_t *db,
               break;
             assert(symbol != NULL);
 
-            DEBUG("adding symbol %s:%lu:%lu:%s", symbol->path, symbol->lineno,
-              symbol->colno, symbol->name);
+            DEBUG("adding symbol %s:%lu:%lu:%s:%u:%u", symbol->path, symbol->lineno, symbol->colno, symbol->name, symbol->category, symbol->cx_category);
+
+            if (option.exclude_sdsp){
+              if ( regexec(&rp, symbol->path, (size_t) 0, NULL, 0) == 0 ){            
+                DEBUG("excluding symbol %s:%lu:%lu:%s:%u:%u", symbol->path, symbol->lineno, symbol->colno, symbol->name, symbol->category, symbol->cx_category);
+	        continue;
+	      }
+	    }
             if ((rc = add_symbol(db, symbol)))
               break;
           }

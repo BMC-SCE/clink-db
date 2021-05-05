@@ -4,6 +4,7 @@
 #include <errno.h>
 #include <getopt.h>
 #include "help.h"
+#include "helpx.h"
 #include <limits.h>
 #include "line_ui.h"
 #include "ncurses_ui.h"
@@ -15,6 +16,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+
 
 static char *xstrdup(const char *s) {
   char *p = strdup(s);
@@ -49,7 +51,9 @@ static void parse_args(int argc, char **argv) {
       {"database",      required_argument, 0, 'f'},
       {"debug",         no_argument,       0, 129 },
       {"help",          no_argument,       0, 'h'},
+      {"help-cx",       no_argument,       0, 'x'},
       {"include",       required_argument, 0, 'I'},
+      {"kernel",        no_argument,       0, 'k'},
       {"jobs",          required_argument, 0, 'j'},
       {"line-oriented", no_argument,       0, 'l'},
       {"no-build",      no_argument,       0, 'd'},
@@ -57,7 +61,7 @@ static void parse_args(int argc, char **argv) {
     };
 
     int index = 0;
-    int c = getopt_long(argc, argv, "bCcdef:hI:j:lqRs:T", opts, &index);
+    int c = getopt_long(argc, argv, "bCcdef:hxkI:j:lqRs:T", opts, &index);
 
     if (c == -1)
       break;
@@ -94,9 +98,17 @@ static void parse_args(int argc, char **argv) {
         help();
         exit(EXIT_SUCCESS);
 
+      case 'x': // --help-cx
+        helpx();
+        exit(EXIT_SUCCESS);
+
       case 'I': // --include
         xappend(&option.cxx_argv, &option.cxx_argc, "-I");
         xappend(&option.cxx_argv, &option.cxx_argc, optarg);
+        break;
+
+      case 'k': // --kernel
+        option.exclude_sdsp = true;
         break;
 
       case 'j': // --jobs
@@ -185,7 +197,7 @@ int main(int argc, char **argv) {
   // parse command line arguments
   parse_args(argc, argv);
 
-  // figure out where to create (or re-open) .clink.db
+  // figure out where to create (or re-open) clink-db.sqlite3
   int rc = set_db_path();
   if (rc) {
     fprintf(stderr, "failed to configure path to database: %s\n", strerror(rc));

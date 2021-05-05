@@ -1,5 +1,7 @@
 #pragma once
 
+#include <clang-c/Index.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -9,12 +11,18 @@ typedef enum {
   CLINK_FUNCTION_CALL = 1,
   CLINK_REFERENCE = 2,
   CLINK_INCLUDE = 3,
+  CLINK_OTHER = 4,
 } clink_category_t;
+
+typedef enum CXCursorKind cx_cursor_kind;
 
 typedef struct {
 
   /// the type of this symbol
   clink_category_t category;
+
+  /// CXCursorKind of this symbol
+  cx_cursor_kind cx_category;
 
   /// name of this item or referent
   char *name;

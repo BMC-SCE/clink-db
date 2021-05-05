@@ -16,6 +16,7 @@ int clink_symbol_copy(clink_symbol_t *restrict dst,
   int rc = 0;
 
   dst->category = src->category;
+  dst->cx_category=src->cx_category;
 
   if (src->name != NULL) {
     dst->name = strdup(src->name);

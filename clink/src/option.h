@@ -21,6 +21,9 @@ typedef struct {
   // update the Clink symbol database with latest source file changes?
   bool update_database;
 
+  // exclude symbols form default searching path (c++ -E -x c++ - -v < /dev/null)
+  bool exclude_sdsp; 
+
   // run the NCurses-based interface?
   bool ncurses_ui;
 

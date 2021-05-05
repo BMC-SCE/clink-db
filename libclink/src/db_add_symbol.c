@@ -21,7 +21,7 @@ int clink_db_add_symbol(clink_db_t *db, const clink_symbol_t *symbol) {
   // insert into the symbol table
 
   static const char SYMBOL_INSERT[] = "insert or replace into symbols (name, "
-    "path, category, line, col, parent) values (@name, @path, @category, "
+    "path, category, cx_category, line, col, parent) values (@name, @path, @category, @cx_category, "
     "@line, @col, @parent);";
 
   int rc = 0;
@@ -41,13 +41,16 @@ int clink_db_add_symbol(clink_db_t *db, const clink_symbol_t *symbol) {
   if ((rc = sql_bind_int(s, 3, symbol->category)))
     goto done;
 
-  if ((rc = sql_bind_int(s, 4, symbol->lineno)))
+  if ((rc = sql_bind_int(s, 4, symbol->cx_category)))
     goto done;
 
-  if ((rc = sql_bind_int(s, 5, symbol->colno)))
+  if ((rc = sql_bind_int(s, 5, symbol->lineno)))
     goto done;
 
-  if ((rc = sql_bind_text(s, 6, symbol->parent == NULL ? "" : symbol->parent)))
+  if ((rc = sql_bind_int(s, 6, symbol->colno)))
+    goto done;
+
+  if ((rc = sql_bind_text(s, 7, symbol->parent == NULL ? "" : symbol->parent)))
     goto done;
 
   {

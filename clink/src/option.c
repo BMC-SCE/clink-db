@@ -13,6 +13,7 @@ option_t option = {
   .src = NULL,
   .src_len = 0,
   .update_database = true,
+  .exclude_sdsp = false,
   .ncurses_ui = true,
   .line_ui = false,
   .threads = 0,
@@ -46,7 +47,7 @@ int set_db_path(void) {
 
     // create a path to a database at this level
     char *candidate = NULL;
-    if ((rc = join(branch, ".clink.db", &candidate)))
+    if ((rc = join(branch, "clink-db.sqlite3", &candidate)))
       goto done;
 
     // if this exists, we are done
@@ -71,7 +72,7 @@ int set_db_path(void) {
   }
 
   // if we still did not find a database, default to the current directory
-  if ((rc = join(wd, ".clink.db", &option.database_path)))
+  if ((rc = join(wd, "clink-db.sqlite3", &option.database_path)))
     goto done;
 
 done:
